@@ -17,6 +17,14 @@ pub struct DnsHeader {
     pub arcount: u16,
 }
 
+impl DnsHeader {
+    pub fn create_response(mut query_header: DnsHeader) -> DnsHeader {
+        query_header.qr = 1;
+        query_header.rcode = if query_header.opcode == 0 { 0 } else { 4 };
+        query_header
+    }
+}
+
 impl DnsSerialize for DnsHeader {
     fn serialize(&self) -> Vec<u8> {
         let mut v: Vec<u8> = Vec::with_capacity(12);
