@@ -1,37 +1,40 @@
+mod dns_header;
+mod dns_question;
+
+use dns_header::DnsHeader;
+use dns_question::DnsQuestion;
 use std::net::UdpSocket;
 
-struct DnsHeader {
-    id: u16,
-    qr: u8,     // 1 bit
-    opcode: u8, // 4 bits
-    aa: u8,     // 1 bit
-    tc: u8,     // 1 bit
-    rd: u8,     // 1 bit
-    ra: u8,     // 1 bit
-    z: u8,      // 3 bits
-    rcode: u8,  // 4 bits
-    qdcount: u16,
-    ancount: u16,
-    nscount: u16,
-    arcount: u16,
+struct DnsPacket {
+    header: DnsHeader,
+    questions: Vec<DnsQuestion>,
 }
 
-impl DnsHeader {
+impl DnsPacket {
+    fn new(packet_id: u16, query_response_indicator: u8, question_names: &[&str]) -> Self {
+        Self {
+            header: DnsHeader::new(
+                packet_id,
+                query_response_indicator,
+                question_names
+                    .len()
+                    .try_into()
+                    .expect("questions length should fit in 2 bytes"),
+            ),
+            questions: question_names
+                .into_iter()
+                .map(|name| DnsQuestion::new(name))
+                .collect(),
+        }
+    }
+
     fn serialize(&self) -> Vec<u8> {
-        let mut v: Vec<u8> = Vec::with_capacity(12);
-        v.extend_from_slice(&self.id.to_be_bytes());
-
-        // next byte includes qr, opcode, aa, tc, rd
-        v.push(self.qr << 7 | self.opcode << 6 | self.aa << 2 | self.tc << 1 | self.rd);
-
-        // next byte includes ra, z, rcode
-        v.push(self.ra << 7 | self.z << 6 | self.rcode << 3);
-
-        v.extend_from_slice(&self.qdcount.to_be_bytes());
-        v.extend_from_slice(&self.ancount.to_be_bytes());
-        v.extend_from_slice(&self.nscount.to_be_bytes());
-        v.extend_from_slice(&self.arcount.to_be_bytes());
-        v
+        let mut p: Vec<u8> = Vec::new();
+        p.extend_from_slice(&self.header.serialize());
+        for question in &self.questions {
+            p.extend_from_slice(&question.serialize());
+        }
+        p
     }
 }
 
@@ -46,22 +49,8 @@ fn main() {
         match udp_socket.recv_from(&mut buf) {
             Ok((size, source)) => {
                 println!("Received {} bytes from {}", size, source);
-                let dns_header = DnsHeader {
-                    id: 1234,
-                    qr: 1,
-                    opcode: 0,
-                    aa: 0,
-                    tc: 0,
-                    rd: 0,
-                    ra: 0,
-                    z: 0,
-                    rcode: 0,
-                    qdcount: 0,
-                    ancount: 0,
-                    nscount: 0,
-                    arcount: 0,
-                };
-                let response = dns_header.serialize();
+                let dns_packet = DnsPacket::new(1234, 1, &["codecrafters.io"]);
+                let response = dns_packet.serialize();
                 udp_socket
                     .send_to(&response, source)
                     .expect("Failed to send response");
