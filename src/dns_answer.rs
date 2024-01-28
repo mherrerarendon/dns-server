@@ -37,3 +37,20 @@ impl Default for DnsAnswer {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_serializes() {
+        let a = DnsAnswer::new("codecrafters.io", DnsType::A(8, 8, 8, 8));
+        assert_eq!(
+            a.serialize(),
+            [
+                12, 99, 111, 100, 101, 99, 114, 97, 102, 116, 101, 114, 115, 2, 105, 111, 0, 0, 1,
+                0, 1, 0, 0, 0, 0, 0, 4, 8, 8, 8, 8
+            ]
+        )
+    }
+}

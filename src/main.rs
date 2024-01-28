@@ -1,61 +1,14 @@
 mod dns_answer;
 mod dns_header;
+mod dns_packet;
 mod dns_question;
 mod dns_type;
 mod label_seq;
 
 use dns_answer::DnsAnswer;
-use dns_header::DnsHeader;
-use dns_question::DnsQuestion;
+use dns_packet::DnsPacket;
 use dns_type::DnsType;
 use std::net::UdpSocket;
-
-struct DnsPacket {
-    header: DnsHeader,
-    questions: Vec<DnsQuestion>,
-    answers: Vec<DnsAnswer>,
-}
-
-impl DnsPacket {
-    fn new(
-        packet_id: u16,
-        query_response_indicator: u8,
-        question_names: &[&str],
-        answers: Vec<DnsAnswer>,
-    ) -> Self {
-        Self {
-            header: DnsHeader::new(
-                packet_id,
-                query_response_indicator,
-                question_names
-                    .len()
-                    .try_into()
-                    .expect("questions length should fit in 2 bytes"),
-                answers
-                    .len()
-                    .try_into()
-                    .expect("answers length should fit in 2 bytes"),
-            ),
-            questions: question_names
-                .into_iter()
-                .map(|name| DnsQuestion::new(name))
-                .collect(),
-            answers,
-        }
-    }
-
-    fn serialize(&self) -> Vec<u8> {
-        let mut p: Vec<u8> = Vec::new();
-        p.extend_from_slice(&self.header.serialize());
-        for question in &self.questions {
-            p.extend_from_slice(&question.serialize());
-        }
-        for answer in &self.answers {
-            p.extend_from_slice(&answer.serialize());
-        }
-        p
-    }
-}
 
 fn main() {
     // You can use print statements as follows for debugging, they'll be visible when running tests.

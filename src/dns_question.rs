@@ -34,3 +34,20 @@ impl Default for DnsQuestion {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_serializes() {
+        let q = DnsQuestion::new("codecrafters.io");
+        assert_eq!(
+            q.serialize(),
+            [
+                12, 99, 111, 100, 101, 99, 114, 97, 102, 116, 101, 114, 115, 2, 105, 111, 0, 0, 1,
+                0, 1
+            ]
+        )
+    }
+}

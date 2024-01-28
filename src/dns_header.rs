@@ -66,3 +66,14 @@ impl Default for DnsHeader {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_serializes() {
+        let h = DnsHeader::new(1234, 1, 2, 2);
+        assert_eq!(h.serialize(), [4, 210, 128, 0, 0, 2, 0, 2, 0, 0, 0, 0])
+    }
+}

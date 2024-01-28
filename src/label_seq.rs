@@ -33,3 +33,17 @@ impl Default for LabelSeq {
         Self { name: "".into() }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_serializes() {
+        let l = LabelSeq::new("codecrafters.io");
+        assert_eq!(
+            l.serialize(),
+            [12, 99, 111, 100, 101, 99, 114, 97, 102, 116, 101, 114, 115, 2, 105, 111, 0]
+        )
+    }
+}

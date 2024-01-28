@@ -33,3 +33,24 @@ impl Default for DnsType {
         DnsType::A(0, 0, 0, 0)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_serializes() {
+        assert_eq!(DnsType::A(8, 8, 8, 8).serialize(), [8, 8, 8, 8])
+    }
+
+    #[test]
+    fn it_returns_correct_length() {
+        assert_eq!(DnsType::A(8, 8, 8, 8).len_as_bytes(), [0, 4])
+    }
+
+    #[test]
+    fn it_returns_correct_type_id() {
+        assert_eq!(DnsType::A(8, 8, 8, 8).as_int_bytes(), [0, 1]);
+        assert_eq!(DnsType::_Cname.as_int_bytes(), [0, 5]);
+    }
+}
