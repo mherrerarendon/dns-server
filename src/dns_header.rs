@@ -17,22 +17,6 @@ pub struct DnsHeader {
     pub arcount: u16,
 }
 
-impl DnsHeader {
-    pub fn new(
-        packet_id: u16,
-        query_response_indicator: u8,
-        question_count: u16,
-        answer_count: u16,
-    ) -> Self {
-        let mut h = Self::default();
-        h.id = packet_id;
-        h.qr = query_response_indicator;
-        h.qdcount = question_count;
-        h.ancount = answer_count;
-        h
-    }
-}
-
 impl DnsSerialize for DnsHeader {
     fn serialize(&self) -> Vec<u8> {
         let mut v: Vec<u8> = Vec::with_capacity(12);

@@ -1,8 +1,4 @@
-use crate::{
-    dns_serde::{DnsDeserialize, DnsSerialize},
-    dns_type::DnsType,
-    label_seq::LabelSeq,
-};
+use crate::{dns_serde::DnsSerialize, dns_type::DnsType, label_seq::LabelSeq};
 
 pub struct DnsAnswer {
     pub name: LabelSeq,

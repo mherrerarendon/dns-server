@@ -11,6 +11,8 @@ use dns_packet::DnsPacket;
 use dns_type::DnsType;
 use std::net::UdpSocket;
 
+use crate::dns_serde::{DnsDeserialize, DnsSerialize};
+
 fn main() {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     println!("Logs from your program will appear here!");
@@ -22,8 +24,9 @@ fn main() {
         match udp_socket.recv_from(&mut buf) {
             Ok((size, source)) => {
                 println!("Received {} bytes from {}", size, source);
+                let (header, _, _) = DnsPacket::deserialize(&buf).into_parts();
                 let dns_answer = DnsAnswer::new(&"codecrafters.io", DnsType::A(8, 8, 8, 8));
-                let dns_packet = DnsPacket::new(1234, 1, &["codecrafters.io"], vec![dns_answer]);
+                let dns_packet = DnsPacket::new(header, &["codecrafters.io"], vec![dns_answer]);
                 let response = dns_packet.serialize();
                 udp_socket
                     .send_to(&response, source)

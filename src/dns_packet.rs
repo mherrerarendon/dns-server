@@ -1,6 +1,8 @@
 use crate::{
-    dns_answer::DnsAnswer, dns_header::DnsHeader, dns_question::DnsQuestion,
-    dns_serde::DnsSerialize,
+    dns_answer::DnsAnswer,
+    dns_header::DnsHeader,
+    dns_question::DnsQuestion,
+    dns_serde::{DnsDeserialize, DnsSerialize},
 };
 
 pub struct DnsPacket {
@@ -10,25 +12,17 @@ pub struct DnsPacket {
 }
 
 impl DnsPacket {
-    pub fn new(
-        packet_id: u16,
-        query_response_indicator: u8,
-        question_names: &[&str],
-        answers: Vec<DnsAnswer>,
-    ) -> Self {
+    pub fn new(mut header: DnsHeader, question_names: &[&str], answers: Vec<DnsAnswer>) -> Self {
+        header.qdcount = question_names
+            .len()
+            .try_into()
+            .expect("questions length should fit in 2 bytes");
+        header.ancount = answers
+            .len()
+            .try_into()
+            .expect("answers length should fit in 2 bytes");
         Self {
-            header: DnsHeader::new(
-                packet_id,
-                query_response_indicator,
-                question_names
-                    .len()
-                    .try_into()
-                    .expect("questions length should fit in 2 bytes"),
-                answers
-                    .len()
-                    .try_into()
-                    .expect("answers length should fit in 2 bytes"),
-            ),
+            header,
             questions: question_names
                 .into_iter()
                 .map(|name| DnsQuestion::new(name))
@@ -37,7 +31,13 @@ impl DnsPacket {
         }
     }
 
-    pub fn serialize(&self) -> Vec<u8> {
+    pub fn into_parts(self) -> (DnsHeader, Vec<DnsQuestion>, Vec<DnsAnswer>) {
+        (self.header, self.questions, self.answers)
+    }
+}
+
+impl DnsSerialize for DnsPacket {
+    fn serialize(&self) -> Vec<u8> {
         let mut p: Vec<u8> = Vec::new();
         p.extend_from_slice(&self.header.serialize());
         for question in &self.questions {
@@ -50,6 +50,16 @@ impl DnsPacket {
     }
 }
 
+impl DnsDeserialize for DnsPacket {
+    fn deserialize(data: &[u8]) -> Self {
+        Self {
+            header: DnsHeader::deserialize(&data[..=12]),
+            questions: vec![DnsQuestion::default()],
+            answers: vec![DnsAnswer::default()],
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::dns_type::DnsType;
@@ -58,9 +68,11 @@ mod tests {
 
     #[test]
     fn it_serializes() {
+        let mut h = DnsHeader::default();
+        h.id = 1234;
+        h.qr = 1;
         let p = DnsPacket::new(
-            1234,
-            1,
+            h,
             &["codecrafters.io"],
             vec![DnsAnswer::new("codecrafters.io", DnsType::A(8, 8, 8, 8))],
         );
