@@ -2,6 +2,7 @@ mod dns_answer;
 mod dns_header;
 mod dns_packet;
 mod dns_question;
+mod dns_serde;
 mod dns_type;
 mod label_seq;
 

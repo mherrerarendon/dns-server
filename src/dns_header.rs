@@ -1,3 +1,6 @@
+use crate::dns_serde::{DnsDeserialize, DnsSerialize};
+
+#[derive(Debug, PartialEq)]
 pub struct DnsHeader {
     pub id: u16,
     pub qr: u8,     // 1 bit
@@ -28,22 +31,47 @@ impl DnsHeader {
         h.ancount = answer_count;
         h
     }
+}
 
-    pub fn serialize(&self) -> Vec<u8> {
+impl DnsSerialize for DnsHeader {
+    fn serialize(&self) -> Vec<u8> {
         let mut v: Vec<u8> = Vec::with_capacity(12);
         v.extend_from_slice(&self.id.to_be_bytes());
 
         // next byte includes qr, opcode, aa, tc, rd
-        v.push(self.qr << 7 | self.opcode << 6 | self.aa << 2 | self.tc << 1 | self.rd);
+        v.push(self.qr << 7 | self.opcode << 3 | self.aa << 2 | self.tc << 1 | self.rd);
 
         // next byte includes ra, z, rcode
-        v.push(self.ra << 7 | self.z << 6 | self.rcode << 3);
+        v.push(self.ra << 7 | self.z << 4 | self.rcode);
 
         v.extend_from_slice(&self.qdcount.to_be_bytes());
         v.extend_from_slice(&self.ancount.to_be_bytes());
         v.extend_from_slice(&self.nscount.to_be_bytes());
         v.extend_from_slice(&self.arcount.to_be_bytes());
         v
+    }
+}
+
+impl DnsDeserialize for DnsHeader {
+    fn deserialize(data: &[u8]) -> Self {
+        Self {
+            id: u16::from_be_bytes(data[..=1].try_into().expect("should have 2 bytes")),
+
+            qr: data[2] >> 7 & 0x01,           //1
+            opcode: data[2] >> 3 & 0b00001111, // 4
+            aa: data[2] >> 2 & 0x01,           //1
+            tc: data[2] >> 1 & 0x01,           //1
+            rd: data[2] & 0x01,                //1
+
+            ra: data[3] >> 7 & 0x01,      // 1
+            z: data[3] >> 4 & 0b00000111, // 3
+            rcode: data[3] & 0b00001111,  // 4
+
+            qdcount: u16::from_be_bytes(data[4..=5].try_into().expect("bytes should exist")),
+            ancount: u16::from_be_bytes(data[6..=7].try_into().expect("bytes should exist")),
+            nscount: u16::from_be_bytes(data[8..=9].try_into().expect("bytes should exist")),
+            arcount: u16::from_be_bytes(data[10..=11].try_into().expect("bytes should exist")),
+        }
     }
 }
 
@@ -72,8 +100,24 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_serializes() {
-        let h = DnsHeader::new(1234, 1, 2, 2);
-        assert_eq!(h.serialize(), [4, 210, 128, 0, 0, 2, 0, 2, 0, 0, 0, 0])
+    fn it_serdes() {
+        let h = DnsHeader {
+            id: 1234,
+            qr: 1,
+            opcode: 2,
+            aa: 1,
+            tc: 0,
+            rd: 1,
+            ra: 0,     // 0b00000000
+            z: 7,      // 0b00000111
+            rcode: 15, // 0b00001111
+            qdcount: 2,
+            ancount: 2,
+            nscount: 7,
+            arcount: 8,
+        };
+        let expected_bytes = [4, 210, 149, 127, 0, 2, 0, 2, 0, 7, 0, 8];
+        assert_eq!(h.serialize(), expected_bytes);
+        assert_eq!(DnsHeader::deserialize(&expected_bytes), h)
     }
 }

@@ -1,4 +1,7 @@
-use crate::{dns_answer::DnsAnswer, dns_header::DnsHeader, dns_question::DnsQuestion};
+use crate::{
+    dns_answer::DnsAnswer, dns_header::DnsHeader, dns_question::DnsQuestion,
+    dns_serde::DnsSerialize,
+};
 
 pub struct DnsPacket {
     header: DnsHeader,
