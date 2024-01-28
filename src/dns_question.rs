@@ -41,8 +41,8 @@ impl Default for DnsQuestion {
     fn default() -> Self {
         Self {
             name: "".into(),
-            _type: 0,
-            _class: 0,
+            _type: 1,
+            _class: 1,
         }
     }
 }
