@@ -1,13 +1,16 @@
+use crate::dns_type::DnsType;
+use crate::label_seq::LabelSeq;
+
 pub struct DnsQuestion {
-    pub name: String,
-    pub _type: u16,
+    pub name: LabelSeq,
+    pub _type: DnsType,
     pub _class: u16,
 }
 
 impl DnsQuestion {
     pub fn new(name: &str) -> Self {
         let mut dq = Self::default();
-        dq.name = name.into();
+        dq.name = LabelSeq::new(name);
         dq
     }
 
@@ -15,23 +18,8 @@ impl DnsQuestion {
         let mut v: Vec<u8> = Vec::new();
 
         // serialize the name
-        self.name
-            .split(".")
-            .into_iter()
-            .map(|label| label.as_bytes())
-            .for_each(|label_bytes| {
-                v.push(
-                    label_bytes
-                        .len()
-                        .try_into()
-                        .expect("label length should not be longer than 128 bytes"),
-                );
-                v.extend_from_slice(&label_bytes)
-            });
-
-        v.push(0x0);
-
-        v.extend_from_slice(&self._type.to_be_bytes());
+        v.extend_from_slice(&self.name.serialize());
+        v.extend_from_slice(&self._type.as_int_bytes());
         v.extend_from_slice(&self._class.to_be_bytes());
         v
     }
@@ -40,8 +28,8 @@ impl DnsQuestion {
 impl Default for DnsQuestion {
     fn default() -> Self {
         Self {
-            name: "".into(),
-            _type: 1,
+            name: LabelSeq::default(),
+            _type: DnsType::default(),
             _class: 1,
         }
     }

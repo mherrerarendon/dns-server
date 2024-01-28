@@ -1,17 +1,28 @@
+mod dns_answer;
 mod dns_header;
 mod dns_question;
+mod dns_type;
+mod label_seq;
 
+use dns_answer::DnsAnswer;
 use dns_header::DnsHeader;
 use dns_question::DnsQuestion;
+use dns_type::DnsType;
 use std::net::UdpSocket;
 
 struct DnsPacket {
     header: DnsHeader,
     questions: Vec<DnsQuestion>,
+    answers: Vec<DnsAnswer>,
 }
 
 impl DnsPacket {
-    fn new(packet_id: u16, query_response_indicator: u8, question_names: &[&str]) -> Self {
+    fn new(
+        packet_id: u16,
+        query_response_indicator: u8,
+        question_names: &[&str],
+        answers: Vec<DnsAnswer>,
+    ) -> Self {
         Self {
             header: DnsHeader::new(
                 packet_id,
@@ -20,11 +31,16 @@ impl DnsPacket {
                     .len()
                     .try_into()
                     .expect("questions length should fit in 2 bytes"),
+                answers
+                    .len()
+                    .try_into()
+                    .expect("answers length should fit in 2 bytes"),
             ),
             questions: question_names
                 .into_iter()
                 .map(|name| DnsQuestion::new(name))
                 .collect(),
+            answers,
         }
     }
 
@@ -33,6 +49,9 @@ impl DnsPacket {
         p.extend_from_slice(&self.header.serialize());
         for question in &self.questions {
             p.extend_from_slice(&question.serialize());
+        }
+        for answer in &self.answers {
+            p.extend_from_slice(&answer.serialize());
         }
         p
     }
@@ -49,7 +68,8 @@ fn main() {
         match udp_socket.recv_from(&mut buf) {
             Ok((size, source)) => {
                 println!("Received {} bytes from {}", size, source);
-                let dns_packet = DnsPacket::new(1234, 1, &["codecrafters.io"]);
+                let dns_answer = DnsAnswer::new(&"codecrafters.io", DnsType::A(8, 8, 8, 8));
+                let dns_packet = DnsPacket::new(1234, 1, &["codecrafters.io"], vec![dns_answer]);
                 let response = dns_packet.serialize();
                 udp_socket
                     .send_to(&response, source)
