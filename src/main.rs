@@ -1,3 +1,4 @@
+mod create_response;
 mod dns_answer;
 mod dns_header;
 mod dns_packet;
@@ -6,12 +7,8 @@ mod dns_serde;
 mod dns_type;
 mod label_seq;
 
-use dns_answer::DnsAnswer;
-use dns_packet::DnsPacket;
-use dns_type::DnsType;
+use create_response::create_response;
 use std::net::UdpSocket;
-
-use crate::dns_serde::{DnsDeserialize, DnsSerialize};
 
 fn main() {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
@@ -24,10 +21,7 @@ fn main() {
         match udp_socket.recv_from(&mut buf) {
             Ok((size, source)) => {
                 println!("Received {} bytes from {}", size, source);
-                let (header, _, _) = DnsPacket::deserialize(&buf).into_parts();
-                let dns_answer = DnsAnswer::new(&"codecrafters.io", DnsType::A(8, 8, 8, 8));
-                let dns_packet = DnsPacket::new(header, &["codecrafters.io"], vec![dns_answer]);
-                let response = dns_packet.serialize();
+                let response = create_response(&buf);
                 udp_socket
                     .send_to(&response, source)
                     .expect("Failed to send response");
