@@ -51,12 +51,16 @@ impl DnsSerialize for DnsPacket {
 }
 
 impl DnsDeserialize for DnsPacket {
-    fn deserialize(data: &[u8]) -> Self {
-        Self {
-            header: DnsHeader::deserialize(&data[..=12]),
-            questions: vec![DnsQuestion::default()],
-            answers: vec![DnsAnswer::default()],
-        }
+    fn deserialize(data: &[u8]) -> (&[u8], Self) {
+        let (remainder, header) = DnsHeader::deserialize(&data[..=12]);
+        (
+            &[],
+            Self {
+                header,
+                questions: vec![DnsQuestion::default()],
+                answers: vec![DnsAnswer::default()],
+            },
+        )
     }
 }
 

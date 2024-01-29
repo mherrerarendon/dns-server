@@ -3,5 +3,5 @@ pub trait DnsSerialize {
 }
 
 pub trait DnsDeserialize {
-    fn deserialize(data: &[u8]) -> Self;
+    fn deserialize(data: &[u8]) -> (&[u8], Self);
 }

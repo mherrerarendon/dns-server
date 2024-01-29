@@ -45,8 +45,8 @@ impl DnsSerialize for DnsHeader {
 }
 
 impl DnsDeserialize for DnsHeader {
-    fn deserialize(data: &[u8]) -> Self {
-        Self {
+    fn deserialize(data: &[u8]) -> (&[u8], Self) {
+        let h = Self {
             id: u16::from_be_bytes(data[..=1].try_into().expect("should have 2 bytes")),
 
             qr: data[2] >> 7 & 0x01,           //1
@@ -63,7 +63,8 @@ impl DnsDeserialize for DnsHeader {
             ancount: u16::from_be_bytes(data[6..=7].try_into().expect("bytes should exist")),
             nscount: u16::from_be_bytes(data[8..=9].try_into().expect("bytes should exist")),
             arcount: u16::from_be_bytes(data[10..=11].try_into().expect("bytes should exist")),
-        }
+        };
+        (&data[12..], h)
     }
 }
 
@@ -110,6 +111,7 @@ mod tests {
         };
         let expected_bytes = [4, 210, 149, 127, 0, 2, 0, 2, 0, 7, 0, 8];
         assert_eq!(h.serialize(), expected_bytes);
-        assert_eq!(DnsHeader::deserialize(&expected_bytes), h)
+        let (remainder, dh) = DnsHeader::deserialize(&expected_bytes);
+        assert_eq!(dh, h)
     }
 }

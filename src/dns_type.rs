@@ -1,3 +1,5 @@
+use crate::dns_serde::{DnsDeserialize, DnsSerialize};
+
 pub enum DnsType {
     A(u8, u8, u8, u8),
     _Cname,
@@ -12,6 +14,14 @@ impl DnsType {
         .to_be_bytes()
     }
 
+    pub fn from_bytes(bytes: [u8; 2]) -> Self {
+        match u16::from_be_bytes(bytes) {
+            1 => DnsType::A(0, 0, 0, 0),
+            5 => DnsType::_Cname,
+            0_u16 | 2_u16..=4_u16 | 6_u16..=u16::MAX => todo!(),
+        }
+    }
+
     pub fn len_as_bytes(&self) -> [u8; 2] {
         match self {
             DnsType::A(_, _, _, _) => 4u16,
@@ -19,8 +29,10 @@ impl DnsType {
         }
         .to_be_bytes()
     }
+}
 
-    pub fn serialize(&self) -> Vec<u8> {
+impl DnsSerialize for DnsType {
+    fn serialize(&self) -> Vec<u8> {
         match self {
             DnsType::A(a, b, c, d) => vec![*a, *b, *c, *d],
             DnsType::_Cname => todo!(),
