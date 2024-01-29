@@ -43,9 +43,9 @@ fn parse_label(data: &[u8]) -> (usize, String) {
                 label.push_str(".");
                 let (bytes_read, next_segment) = parse_label(&data[new_starting_idx..]);
                 label.push_str(&next_segment);
-                Ok((bytes_read + len + 1, label))
+                Ok((bytes_read + len + 1, label)) // +1 for the byte that indicates length
             } else {
-                Ok((len + 1, label))
+                Ok((len + 2, label)) // +1 for the byte that indicates length and +1 for the last null byte
             }
         })
         .expect("invalid data for label")
@@ -77,7 +77,7 @@ mod tests {
         assert_eq!(l.serialize(), expected_bytes);
         let (remainder, dl) = LabelSeq::deserialize(&expected_bytes);
         assert_eq!(dl, l);
-        assert_eq!(remainder.len(), 10)
+        assert_eq!(remainder.len(), 0)
     }
 
     #[test]
@@ -85,7 +85,7 @@ mod tests {
         let (bytes_read, label) = parse_label(&[
             0x06, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x03, 0x63, 0x6f, 0x6d, 0x00,
         ]);
-        assert_eq!(bytes_read, 6);
+        assert_eq!(bytes_read, 12);
         assert_eq!(label, "google.com");
     }
 }

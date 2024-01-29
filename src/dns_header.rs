@@ -112,6 +112,7 @@ mod tests {
         let expected_bytes = [4, 210, 149, 127, 0, 2, 0, 2, 0, 7, 0, 8];
         assert_eq!(h.serialize(), expected_bytes);
         let (remainder, dh) = DnsHeader::deserialize(&expected_bytes);
-        assert_eq!(dh, h)
+        assert_eq!(dh, h);
+        assert_eq!(remainder.len(), 0);
     }
 }

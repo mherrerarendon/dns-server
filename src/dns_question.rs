@@ -2,6 +2,7 @@ use crate::dns_serde::{DnsDeserialize, DnsSerialize};
 use crate::dns_type::DnsType;
 use crate::label_seq::LabelSeq;
 
+#[derive(Debug, PartialEq)]
 pub struct DnsQuestion {
     pub name: LabelSeq,
     pub _type: DnsType,
@@ -22,7 +23,7 @@ impl DnsSerialize for DnsQuestion {
 
         // serialize the name
         v.extend_from_slice(&self.name.serialize());
-        v.extend_from_slice(&self._type.as_int_bytes());
+        v.extend_from_slice(&self._type.int_as_bytes());
         v.extend_from_slice(&self._class.to_be_bytes());
         v
     }
@@ -59,14 +60,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_serializes() {
+    fn it_serdes() {
         let q = DnsQuestion::new("codecrafters.io");
-        assert_eq!(
-            q.serialize(),
-            [
-                12, 99, 111, 100, 101, 99, 114, 97, 102, 116, 101, 114, 115, 2, 105, 111, 0, 0, 1,
-                0, 1
-            ]
-        )
+        let expected_bytes = [
+            12, 99, 111, 100, 101, 99, 114, 97, 102, 116, 101, 114, 115, 2, 105, 111, 0, 0, 1, 0, 1,
+        ];
+        assert_eq!(q.serialize(), expected_bytes);
+        let (remainder, dq) = DnsQuestion::deserialize(&expected_bytes);
+        assert_eq!(remainder.len(), 0);
+        assert_eq!(dq, q);
     }
 }

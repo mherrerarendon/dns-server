@@ -52,7 +52,14 @@ impl DnsSerialize for DnsPacket {
 
 impl DnsDeserialize for DnsPacket {
     fn deserialize(data: &[u8]) -> (&[u8], Self) {
-        let (remainder, header) = DnsHeader::deserialize(&data[..=12]);
+        let (remainder, header) = DnsHeader::deserialize(&data);
+        let mut questions_remainder = remainder;
+        let mut questions: Vec<DnsQuestion> = Vec::new();
+        for _ in 0..header.qdcount {
+            let (remainder, question) = DnsQuestion::deserialize(&questions_remainder);
+            questions_remainder = remainder;
+            questions.push(question);
+        }
         (
             &[],
             Self {

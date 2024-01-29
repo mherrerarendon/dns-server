@@ -1,5 +1,10 @@
-use crate::{dns_serde::DnsSerialize, dns_type::DnsType, label_seq::LabelSeq};
+use crate::{
+    dns_serde::{DnsDeserialize, DnsSerialize},
+    dns_type::DnsType,
+    label_seq::LabelSeq,
+};
 
+#[derive(Debug, PartialEq)]
 pub struct DnsAnswer {
     pub name: LabelSeq,
     pub _type: DnsType,
@@ -20,7 +25,7 @@ impl DnsSerialize for DnsAnswer {
     fn serialize(&self) -> Vec<u8> {
         let mut a: Vec<u8> = Vec::new();
         a.extend_from_slice(&self.name.serialize());
-        a.extend_from_slice(&self._type.as_int_bytes());
+        a.extend_from_slice(&self._type.int_as_bytes());
         a.extend_from_slice(&self._class.to_be_bytes());
         a.extend_from_slice(&self.ttl.to_be_bytes());
         a.extend_from_slice(&self._type.len_as_bytes());

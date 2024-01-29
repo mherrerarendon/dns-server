@@ -1,12 +1,13 @@
-use crate::dns_serde::{DnsDeserialize, DnsSerialize};
+use crate::dns_serde::DnsSerialize;
 
+#[derive(Debug, PartialEq)]
 pub enum DnsType {
     A(u8, u8, u8, u8),
     _Cname,
 }
 
 impl DnsType {
-    pub fn as_int_bytes(&self) -> [u8; 2] {
+    pub fn int_as_bytes(&self) -> [u8; 2] {
         match self {
             DnsType::A(_, _, _, _) => 1u16,
             DnsType::_Cname => 5u16,
@@ -62,7 +63,7 @@ mod tests {
 
     #[test]
     fn it_returns_correct_type_id() {
-        assert_eq!(DnsType::A(8, 8, 8, 8).as_int_bytes(), [0, 1]);
-        assert_eq!(DnsType::_Cname.as_int_bytes(), [0, 5]);
+        assert_eq!(DnsType::A(8, 8, 8, 8).int_as_bytes(), [0, 1]);
+        assert_eq!(DnsType::_Cname.int_as_bytes(), [0, 5]);
     }
 }
