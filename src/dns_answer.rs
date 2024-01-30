@@ -2,7 +2,7 @@ use crate::{
     dns_question::DnsQuestion, dns_serde::DnsSerialize, dns_type::DnsType, label_seq::LabelSeq,
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct DnsAnswer {
     pub name: LabelSeq,
     pub _type: DnsType,

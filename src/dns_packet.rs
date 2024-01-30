@@ -65,10 +65,20 @@ impl DnsDeserialize for DnsPacket {
             &[],
             Self {
                 header,
-                questions: vec![DnsQuestion::default()],
+                questions,
                 answers: vec![DnsAnswer::default()],
             },
         )
+    }
+}
+
+impl Default for DnsPacket {
+    fn default() -> Self {
+        Self {
+            header: DnsHeader::default(),
+            questions: vec![Default::default()],
+            answers: vec![Default::default()],
+        }
     }
 }
 
@@ -80,15 +90,17 @@ mod tests {
 
     #[test]
     fn it_serializes() {
-        let mut h = DnsHeader::default();
+        let h = DnsHeader {
+            id: 1234,
+            qr: 1,
+            ..Default::default()
+        };
         let q = DnsQuestion::default();
         let a = DnsAnswer {
             name: LabelSeq::_new("codecrafters.io"),
             _type: DnsType::A(8, 8, 8, 8),
             ..Default::default()
         };
-        h.id = 1234;
-        h.qr = 1;
         let p = DnsPacket::new(h, vec![q], vec![a]);
         assert_eq!(
             p.serialize(),
@@ -98,5 +110,28 @@ mod tests {
                 8, 8, 8, 8
             ]
         )
+    }
+
+    #[test]
+    fn it_kinda_serdes() {
+        let h = DnsHeader {
+            id: 1234,
+            qr: 1,
+            qdcount: 1,
+            ..Default::default()
+        };
+        let q = DnsQuestion {
+            name: LabelSeq::_new("codecrafters.io"),
+            ..Default::default()
+        };
+        let p = DnsPacket {
+            header: h.clone(),
+            questions: vec![q.clone()],
+            ..Default::default()
+        };
+        let s = p.serialize();
+        let (dh, dq, _) = DnsPacket::deserialize(&s).1.into_parts();
+        assert_eq!(dh, h);
+        assert_eq!(dq[0], q);
     }
 }

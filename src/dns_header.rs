@@ -1,6 +1,6 @@
 use crate::dns_serde::{DnsDeserialize, DnsSerialize};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct DnsHeader {
     pub id: u16,
     pub qr: u8,     // 1 bit

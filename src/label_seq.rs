@@ -1,6 +1,6 @@
 use crate::dns_serde::{DnsDeserialize, DnsSerialize};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct LabelSeq {
     name: String,
 }

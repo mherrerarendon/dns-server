@@ -1,6 +1,6 @@
 use crate::dns_serde::DnsSerialize;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum DnsType {
     A(u8, u8, u8, u8),
     _Cname,
