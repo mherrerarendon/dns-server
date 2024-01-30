@@ -19,7 +19,7 @@ impl DnsType {
         match u16::from_be_bytes(bytes) {
             1 => DnsType::A(0, 0, 0, 0),
             5 => DnsType::_Cname,
-            0_u16 | 2_u16..=4_u16 | 6_u16..=u16::MAX => todo!(),
+            0_u16 | 2_u16..=4_u16 | 6_u16..=u16::MAX => DnsType::A(0, 0, 0, 0),
         }
     }
 
