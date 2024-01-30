@@ -14,7 +14,8 @@ fn main() {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     println!("Logs from your program will appear here!");
     let args: Vec<String> = env::args().collect();
-    println!("{:?}", args);
+    let resolver_addr = &args[2];
+    println!("resolver address: {}", resolver_addr);
 
     let udp_socket = UdpSocket::bind("127.0.0.1:2053").expect("Failed to bind to address");
     let mut buf = [0; 512];
