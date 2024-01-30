@@ -16,19 +16,20 @@ pub fn create_response(query_bytes: &[u8; 512]) -> Vec<u8> {
     let response_header = DnsHeader::create_response(header);
 
     println!("Creating answers");
-    let answers: Vec<DnsAnswer> = questions
-        .iter()
-        .map(|question| {
-            print!("question into");
-            let mut answer: DnsAnswer = question.into();
-            print!("resolve answer");
-            answer.resolve();
-            answer
-        })
-        .collect();
+    // let answers: Vec<DnsAnswer> = questions
+    //     .iter()
+    //     .map(|question| {
+    //         print!("question into");
+    //         let mut answer: DnsAnswer = question.into();
+    //         print!("resolve answer");
+    //         answer.resolve();
+    //         answer
+    //     })
+    //     .collect();
 
     println!("Creating packet");
-    let dns_packet = DnsPacket::new(response_header, questions, answers);
+    let dns_packet = DnsPacket::new(response_header, questions, vec![]);
+    // let dns_packet = DnsPacket::new(response_header, questions, answers);
 
     print!("Serializing packet");
     dns_packet.serialize()
