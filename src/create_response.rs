@@ -9,7 +9,8 @@ pub fn create_response(query_bytes: &[u8; 512]) -> Vec<u8> {
     println!("Deserializing query");
     let (header, questions, _) = DnsPacket::deserialize(query_bytes).1.into_parts();
     println!("Got {} questions", questions.len());
-    println!("question 1: {:?}", questions[0].name);
+    println!("question 1: {:?}", &questions[0]);
+    println!("got header {:?}", header);
 
     println!("Creating response header");
     let response_header = DnsHeader::create_response(header);
