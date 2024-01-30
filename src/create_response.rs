@@ -16,7 +16,9 @@ pub fn create_response(query_bytes: &[u8; 512]) -> Vec<u8> {
     let answers: Vec<DnsAnswer> = questions
         .iter()
         .map(|question| {
+            print!("question into");
             let mut answer: DnsAnswer = question.into();
+            print!("resolve answer");
             answer.resolve();
             answer
         })
