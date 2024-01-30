@@ -89,4 +89,15 @@ mod tests {
         assert_eq!(bytes_read, 12);
         assert_eq!(label, "google.com");
     }
+
+    #[test]
+    fn it_parses_label_with_extra_null_bytes() {
+        let bytes = [
+            12, 99, 111, 100, 101, 99, 114, 97, 102, 116, 101, 114, 115, 2, 105, 111, 0, 0, 1, 0,
+            1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ];
+        let (bytes_read, label) = parse_label(&bytes);
+        assert_eq!(bytes_read, 17);
+        assert_eq!(label, "codecrafters.io");
+    }
 }
