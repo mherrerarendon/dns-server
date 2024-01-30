@@ -35,7 +35,6 @@ impl DnsSerialize for LabelSeq {
 
 /// Returns the number of bytes parsed, and the parsed label
 fn parse_label(data: &[u8]) -> (usize, String) {
-    println!("parsing label with: {:#?}", data);
     let len = data[0] as usize;
     String::from_utf8(data[1..=len].into())
         .and_then(|mut label| {
