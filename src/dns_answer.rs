@@ -32,20 +32,13 @@ impl DnsSerialize for DnsAnswer {
     }
 }
 
-impl From<DnsQuestion> for DnsAnswer {
-    fn from(value: DnsQuestion) -> Self {
-        Self {
-            ttl: 0,
-            ..value.into()
-        }
-    }
-}
-
 impl From<&DnsQuestion> for DnsAnswer {
     fn from(value: &DnsQuestion) -> Self {
         Self {
             ttl: 0,
-            ..value.into()
+            name: value.name.clone(),
+            _type: value._type.clone(),
+            _class: value._class,
         }
     }
 }
