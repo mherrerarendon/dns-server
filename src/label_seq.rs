@@ -6,7 +6,7 @@ pub struct LabelSeq {
 }
 
 impl LabelSeq {
-    pub fn new(name: &str) -> Self {
+    pub fn _new(name: &str) -> Self {
         Self { name: name.into() }
     }
 }
@@ -70,7 +70,7 @@ mod tests {
 
     #[test]
     fn it_serdes() {
-        let l = LabelSeq::new("codecrafters.io");
+        let l = LabelSeq::_new("codecrafters.io");
         let expected_bytes = [
             12, 99, 111, 100, 101, 99, 114, 97, 102, 116, 101, 114, 115, 2, 105, 111, 0,
         ];

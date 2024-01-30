@@ -9,14 +9,6 @@ pub struct DnsQuestion {
     pub _class: u16,
 }
 
-impl DnsQuestion {
-    pub fn new(name: &str) -> Self {
-        let mut dq = Self::default();
-        dq.name = LabelSeq::new(name);
-        dq
-    }
-}
-
 impl DnsSerialize for DnsQuestion {
     fn serialize(&self) -> Vec<u8> {
         let mut v: Vec<u8> = Vec::new();
@@ -61,7 +53,10 @@ mod tests {
 
     #[test]
     fn it_serdes() {
-        let q = DnsQuestion::new("codecrafters.io");
+        let q = DnsQuestion {
+            name: LabelSeq::_new("codecrafters.io"),
+            ..Default::default()
+        };
         let expected_bytes = [
             12, 99, 111, 100, 101, 99, 114, 97, 102, 116, 101, 114, 115, 2, 105, 111, 0, 0, 1, 0, 1,
         ];

@@ -12,8 +12,12 @@ pub struct DnsPacket {
 }
 
 impl DnsPacket {
-    pub fn new(mut header: DnsHeader, question_names: &[&str], answers: Vec<DnsAnswer>) -> Self {
-        header.qdcount = question_names
+    pub fn new(
+        mut header: DnsHeader,
+        questions: Vec<DnsQuestion>,
+        answers: Vec<DnsAnswer>,
+    ) -> Self {
+        header.qdcount = questions
             .len()
             .try_into()
             .expect("questions length should fit in 2 bytes");
@@ -23,10 +27,7 @@ impl DnsPacket {
             .expect("answers length should fit in 2 bytes");
         Self {
             header,
-            questions: question_names
-                .into_iter()
-                .map(|name| DnsQuestion::new(name))
-                .collect(),
+            questions,
             answers,
         }
     }
@@ -73,26 +74,28 @@ impl DnsDeserialize for DnsPacket {
 
 #[cfg(test)]
 mod tests {
-    use crate::dns_type::DnsType;
+    use crate::{dns_type::DnsType, label_seq::LabelSeq};
 
     use super::*;
 
     #[test]
     fn it_serializes() {
         let mut h = DnsHeader::default();
+        let q = DnsQuestion::default();
+        let a = DnsAnswer {
+            name: LabelSeq::_new("codecrafters.io"),
+            _type: DnsType::A(8, 8, 8, 8),
+            ..Default::default()
+        };
         h.id = 1234;
         h.qr = 1;
-        let p = DnsPacket::new(
-            h,
-            &["codecrafters.io"],
-            vec![DnsAnswer::new("codecrafters.io", DnsType::A(8, 8, 8, 8))],
-        );
+        let p = DnsPacket::new(h, vec![q], vec![a]);
         assert_eq!(
             p.serialize(),
             [
-                4, 210, 128, 0, 0, 1, 0, 1, 0, 0, 0, 0, 12, 99, 111, 100, 101, 99, 114, 97, 102,
-                116, 101, 114, 115, 2, 105, 111, 0, 0, 1, 0, 1, 12, 99, 111, 100, 101, 99, 114, 97,
-                102, 116, 101, 114, 115, 2, 105, 111, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 4, 8, 8, 8, 8
+                4, 210, 128, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 12, 99, 111, 100, 101,
+                99, 114, 97, 102, 116, 101, 114, 115, 2, 105, 111, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 4,
+                8, 8, 8, 8
             ]
         )
     }

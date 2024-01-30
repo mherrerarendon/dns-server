@@ -1,7 +1,5 @@
 use crate::{
-    dns_serde::{DnsDeserialize, DnsSerialize},
-    dns_type::DnsType,
-    label_seq::LabelSeq,
+    dns_question::DnsQuestion, dns_serde::DnsSerialize, dns_type::DnsType, label_seq::LabelSeq,
 };
 
 #[derive(Debug, PartialEq)]
@@ -13,11 +11,11 @@ pub struct DnsAnswer {
 }
 
 impl DnsAnswer {
-    pub fn new(name: &str, data: DnsType) -> Self {
-        let mut a = Self::default();
-        a.name = LabelSeq::new(name);
-        a._type = data;
-        a
+    pub fn resolve(&mut self) {
+        self._type = match self._type {
+            DnsType::A(_, _, _, _) => DnsType::A(8, 8, 8, 8),
+            DnsType::_Cname => DnsType::_Cname,
+        }
     }
 }
 
@@ -31,6 +29,24 @@ impl DnsSerialize for DnsAnswer {
         a.extend_from_slice(&self._type.len_as_bytes());
         a.extend_from_slice(&self._type.serialize());
         a
+    }
+}
+
+impl From<DnsQuestion> for DnsAnswer {
+    fn from(value: DnsQuestion) -> Self {
+        Self {
+            ttl: 0,
+            ..value.into()
+        }
+    }
+}
+
+impl From<&DnsQuestion> for DnsAnswer {
+    fn from(value: &DnsQuestion) -> Self {
+        Self {
+            ttl: 0,
+            ..value.into()
+        }
     }
 }
 
@@ -51,7 +67,11 @@ mod tests {
 
     #[test]
     fn it_serializes() {
-        let a = DnsAnswer::new("codecrafters.io", DnsType::A(8, 8, 8, 8));
+        let a = DnsAnswer {
+            name: LabelSeq::_new("codecrafters.io"),
+            _type: DnsType::A(8, 8, 8, 8),
+            ..Default::default()
+        };
         assert_eq!(
             a.serialize(),
             [
