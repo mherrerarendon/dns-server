@@ -5,26 +5,31 @@ use crate::{
     dns_serde::{DnsDeserialize, DnsSerialize},
 };
 
+#[derive(Debug, Clone)]
 pub struct DnsPacket {
-    header: DnsHeader,
-    questions: Vec<DnsQuestion>,
-    answers: Vec<DnsAnswer>,
+    pub header: DnsHeader,
+    pub questions: Vec<DnsQuestion>,
+    pub answers: Option<Vec<DnsAnswer>>,
 }
 
 impl DnsPacket {
     pub fn new(
         mut header: DnsHeader,
         questions: Vec<DnsQuestion>,
-        answers: Vec<DnsAnswer>,
+        answers: Option<Vec<DnsAnswer>>,
     ) -> Self {
         header.qdcount = questions
             .len()
             .try_into()
             .expect("questions length should fit in 2 bytes");
-        header.ancount = answers
-            .len()
-            .try_into()
-            .expect("answers length should fit in 2 bytes");
+        header.ancount = match &answers {
+            Some(answers) => answers
+                .len()
+                .try_into()
+                .expect("answers length should fit in 2 bytes"),
+            None => 0,
+        };
+
         Self {
             header,
             questions,
@@ -32,8 +37,21 @@ impl DnsPacket {
         }
     }
 
-    pub fn into_parts(self) -> (DnsHeader, Vec<DnsQuestion>, Vec<DnsAnswer>) {
+    pub fn into_parts(self) -> (DnsHeader, Vec<DnsQuestion>, Option<Vec<DnsAnswer>>) {
         (self.header, self.questions, self.answers)
+    }
+
+    pub fn add_answer(&mut self, answer: DnsAnswer) {
+        if let Some(ref mut answers) = self.answers {
+            answers.push(answer);
+        }
+    }
+
+    pub fn all_questions_answered(&self) -> bool {
+        match self.answers {
+            Some(ref answers) => answers.len() == self.header.qdcount as usize,
+            None => self.header.qdcount == 0,
+        }
     }
 }
 
@@ -44,8 +62,10 @@ impl DnsSerialize for DnsPacket {
         for question in &self.questions {
             p.extend_from_slice(&question.serialize());
         }
-        for answer in &self.answers {
-            p.extend_from_slice(&answer.serialize());
+        if let Some(answers) = &self.answers {
+            for answer in answers {
+                p.extend_from_slice(&answer.serialize());
+            }
         }
         p
     }
@@ -66,7 +86,7 @@ impl DnsDeserialize for DnsPacket {
             Self {
                 header,
                 questions,
-                answers: vec![DnsAnswer::default()],
+                answers: None,
             },
         )
     }
@@ -77,7 +97,7 @@ impl Default for DnsPacket {
         Self {
             header: DnsHeader::default(),
             questions: vec![Default::default()],
-            answers: vec![Default::default()],
+            answers: None,
         }
     }
 }
@@ -101,7 +121,7 @@ mod tests {
             _type: DnsType::A(8, 8, 8, 8),
             ..Default::default()
         };
-        let p = DnsPacket::new(h, vec![q], vec![a]);
+        let p = DnsPacket::new(h, vec![q], Some(vec![a]));
         assert_eq!(
             p.serialize(),
             [

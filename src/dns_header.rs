@@ -2,8 +2,8 @@ use crate::dns_serde::{DnsDeserialize, DnsSerialize};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct DnsHeader {
-    pub id: u16,
-    pub qr: u8,     // 1 bit
+    pub id: u16,    // packet identifier
+    pub qr: u8,     // 1 bit - query response indicator (1 for reply, 0 for question)
     pub opcode: u8, // 4 bits
     pub aa: u8,     // 1 bit
     pub tc: u8,     // 1 bit
@@ -15,14 +15,6 @@ pub struct DnsHeader {
     pub ancount: u16,
     pub nscount: u16,
     pub arcount: u16,
-}
-
-impl DnsHeader {
-    pub fn create_response(mut query_header: DnsHeader) -> DnsHeader {
-        query_header.qr = 1;
-        query_header.rcode = if query_header.opcode == 0 { 0 } else { 4 };
-        query_header
-    }
 }
 
 impl DnsSerialize for DnsHeader {

@@ -1,4 +1,3 @@
-mod create_response;
 mod dns_answer;
 mod dns_header;
 mod dns_packet;
@@ -6,8 +5,9 @@ mod dns_question;
 mod dns_serde;
 mod dns_type;
 mod label_seq;
+mod query_handler;
 
-use create_response::create_response;
+use query_handler::QueryHandler;
 use std::{env, net::UdpSocket};
 
 fn main() {
@@ -19,15 +19,13 @@ fn main() {
 
     let udp_socket = UdpSocket::bind("127.0.0.1:2053").expect("Failed to bind to address");
     let mut buf = [0; 512];
+    let mut query_handler = QueryHandler::new();
 
     loop {
         match udp_socket.recv_from(&mut buf) {
             Ok((size, source)) => {
                 println!("Received {} bytes from {}", size, source);
-                let response = create_response(&buf);
-                udp_socket
-                    .send_to(&response, source)
-                    .expect("Failed to send response");
+                query_handler.handle_query(&buf, source, Some((&resolver_addr, &udp_socket)));
             }
             Err(e) => {
                 eprintln!("Error receiving data: {}", e);

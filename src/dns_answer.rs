@@ -10,15 +10,6 @@ pub struct DnsAnswer {
     pub ttl: u32,
 }
 
-impl DnsAnswer {
-    pub fn resolve(&mut self) {
-        self._type = match self._type {
-            DnsType::A(_, _, _, _) => DnsType::A(8, 8, 8, 8),
-            DnsType::_Cname => DnsType::_Cname,
-        }
-    }
-}
-
 impl DnsSerialize for DnsAnswer {
     fn serialize(&self) -> Vec<u8> {
         let mut a: Vec<u8> = Vec::new();
