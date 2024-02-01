@@ -32,8 +32,7 @@ impl QueryHandler {
                     "handling {} questions from {}",
                     query_packet.header.qdcount, source_addr
                 );
-                let mut pending_query = query_packet.clone();
-                pending_query.header.qr = 1;
+                let pending_query = query_packet.clone();
                 self.pending_queries
                     .insert(query_packet.header.id, (source_addr, pending_query));
                 for question in query_packet.questions {
@@ -56,6 +55,7 @@ impl QueryHandler {
                         println!("adding answer to pending query from {}", pending_query.0);
                         pending_query.1.add_answer(answers[0].clone());
                         if pending_query.1.all_questions_answered() {
+                            pending_query.1.prepare_for_response();
                             let resolved_bytes = pending_query.1.serialize();
                             socket
                                 .send_to(&resolved_bytes, pending_query.0)

@@ -53,6 +53,17 @@ impl DnsPacket {
             None => self.header.qdcount == 0,
         }
     }
+
+    pub fn prepare_for_response(&mut self) {
+        self.header.qr = 1;
+        self.header.qdcount = self.questions.len() as u16;
+        if let Some(ref answers) = self.answers {
+            self.header.ancount = answers.len() as u16;
+        } else {
+            self.header.ancount = 0;
+        }
+        self.header.rcode = if self.header.opcode == 0 { 0 } else { 4 }
+    }
 }
 
 impl DnsSerialize for DnsPacket {
