@@ -33,7 +33,16 @@ impl QueryHandler {
                     query_packet.header.qdcount, source_addr
                 );
                 println!("query packet: {:?}", query_packet);
-                let pending_query = query_packet.clone();
+                let mut pending_query = query_packet.clone();
+                if query_packet.header.opcode != 0 {
+                    // this is not implemented yet
+                    pending_query.prepare_for_response(1);
+                    let r_bytes = pending_query.serialize();
+                    socket
+                        .send_to(&r_bytes, source_addr)
+                        .expect("Failed to forward query");
+                    return;
+                }
                 self.pending_queries
                     .insert(query_packet.header.id, (source_addr, pending_query));
                 for question in query_packet.questions {
