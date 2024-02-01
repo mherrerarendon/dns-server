@@ -49,16 +49,17 @@ impl QueryHandler {
                 println!("handling answer from {}", source_addr);
                 let (header, _, answers) = DnsPacket::deserialize(query_bytes).1.into_parts();
 
-                if let (Some(ref mut pending_query), Some(answers)) =
-                    (self.pending_queries.get_mut(&header.id), answers)
-                {
-                    println!("adding answer to pending query from {}", pending_query.0);
-                    pending_query.1.add_answer(answers[1].clone());
-                    if pending_query.1.all_questions_answered() {
-                        let resolved_bytes = pending_query.1.serialize();
-                        socket
-                            .send_to(&resolved_bytes, pending_query.0)
-                            .expect("Failed to respond to query");
+                if let Some(ref mut pending_query) = self.pending_queries.get_mut(&header.id) {
+                    println!("found pending query with id {}", header.id);
+                    if let Some(answers) = answers {
+                        println!("adding answer to pending query from {}", pending_query.0);
+                        pending_query.1.add_answer(answers[1].clone());
+                        if pending_query.1.all_questions_answered() {
+                            let resolved_bytes = pending_query.1.serialize();
+                            socket
+                                .send_to(&resolved_bytes, pending_query.0)
+                                .expect("Failed to respond to query");
+                        }
                     }
                 }
             }
