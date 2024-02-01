@@ -37,7 +37,8 @@ impl QueryHandler {
                     .insert(query_packet.header.id, (source_addr, pending_query));
                 for question in query_packet.questions {
                     let forward_header = query_packet.header.clone();
-                    let forward_packet = DnsPacket::new(forward_header, vec![question], None);
+                    let mut forward_packet = DnsPacket::new(forward_header, vec![question], None);
+                    forward_packet.prepare_for_response(0);
                     let forward_bytes = forward_packet.serialize();
                     println!("forwarding question to {}", resolver_addr);
                     socket
@@ -56,7 +57,7 @@ impl QueryHandler {
                             println!("adding answer to pending query from {}", pending_query.0);
                             pending_query.1.add_answer(answers[0].clone());
                             if pending_query.1.all_questions_answered() {
-                                pending_query.1.prepare_for_response();
+                                pending_query.1.prepare_for_response(1);
                                 let resolved_bytes = pending_query.1.serialize();
                                 socket
                                     .send_to(&resolved_bytes, pending_query.0)
