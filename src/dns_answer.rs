@@ -20,8 +20,7 @@ impl DnsSerialize for DnsAnswer {
         a.extend_from_slice(&self._type.int_as_bytes());
         a.extend_from_slice(&self._class.to_be_bytes());
         a.extend_from_slice(&self.ttl.to_be_bytes());
-        a.extend_from_slice(&self._type.len_as_bytes());
-        a.extend_from_slice(&self._type.serialize());
+        a.extend_from_slice(&self._type.serialize_to_length_and_data());
         a
     }
 }

@@ -23,14 +23,6 @@ impl DnsType {
         }
     }
 
-    pub fn len_as_bytes(&self) -> [u8; 2] {
-        match self {
-            DnsType::A(_, _, _, _) => 4u16,
-            DnsType::_Cname => todo!(),
-        }
-        .to_be_bytes()
-    }
-
     pub fn serialize_to_length_and_data(&self) -> Vec<u8> {
         let mut s = match self {
             DnsType::A(_, _, _, _) => 4u16,
@@ -99,11 +91,6 @@ mod tests {
             DnsType::deserialize(1u16.to_be_bytes(), &expected_bytes).1,
             t
         );
-    }
-
-    #[test]
-    fn it_returns_correct_length() {
-        assert_eq!(DnsType::A(8, 8, 8, 8).len_as_bytes(), [0, 4])
     }
 
     #[test]

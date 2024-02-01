@@ -53,7 +53,7 @@ impl QueryHandler {
                     println!("found pending query with id {}", header.id);
                     if let Some(answers) = answers {
                         println!("adding answer to pending query from {}", pending_query.0);
-                        pending_query.1.add_answer(answers[1].clone());
+                        pending_query.1.add_answer(answers[0].clone());
                         if pending_query.1.all_questions_answered() {
                             let resolved_bytes = pending_query.1.serialize();
                             socket
