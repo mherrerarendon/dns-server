@@ -28,7 +28,10 @@ impl QueryHandler {
             let query_packet = DnsPacket::deserialize(query_bytes).1;
             if query_packet.header.qr == 0 {
                 // query is a question
-                println!("handling question from {}", source_addr);
+                println!(
+                    "handling {} questions from {}",
+                    query_packet.header.qdcount, source_addr
+                );
                 let response_packet = query_packet.clone();
                 self.pending_queries
                     .insert(query_packet.header.id, (source_addr, response_packet));
@@ -49,7 +52,7 @@ impl QueryHandler {
                 if let (Some(ref mut pending_query), Some(answers)) =
                     (self.pending_queries.get_mut(&header.id), answers)
                 {
-                    println!("adding answer to pending query");
+                    println!("adding answer to pending query from {}", pending_query.0);
                     pending_query.1.add_answer(answers[1].clone());
                     if pending_query.1.all_questions_answered() {
                         let resolved_bytes = pending_query.1.serialize();
