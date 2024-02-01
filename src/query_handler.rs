@@ -32,9 +32,10 @@ impl QueryHandler {
                     "handling {} questions from {}",
                     query_packet.header.qdcount, source_addr
                 );
-                let response_packet = query_packet.clone();
+                let mut pending_query = query_packet.clone();
+                pending_query.header.qr = 1;
                 self.pending_queries
-                    .insert(query_packet.header.id, (source_addr, response_packet));
+                    .insert(query_packet.header.id, (source_addr, pending_query));
                 for question in query_packet.questions {
                     let forward_header = query_packet.header.clone();
                     let forward_packet = DnsPacket::new(forward_header, vec![question], None);
