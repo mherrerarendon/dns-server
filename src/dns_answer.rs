@@ -1,5 +1,8 @@
 use crate::{
-    dns_question::DnsQuestion, dns_serde::DnsSerialize, dns_type::DnsType, label_seq::LabelSeq,
+    dns_question::DnsQuestion,
+    dns_serde::{DnsDeserialize, DnsSerialize},
+    dns_type::DnsType,
+    label_seq::LabelSeq,
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -20,6 +23,27 @@ impl DnsSerialize for DnsAnswer {
         a.extend_from_slice(&self._type.len_as_bytes());
         a.extend_from_slice(&self._type.serialize());
         a
+    }
+}
+
+impl DnsDeserialize for DnsAnswer {
+    fn deserialize(data: &[u8]) -> (&[u8], Self) {
+        let (remainder, name) = LabelSeq::deserialize(data);
+        let _class = u16::from_be_bytes(remainder[2..4].try_into().expect("Invalid data"));
+        let ttl = u32::from_be_bytes(remainder[4..8].try_into().expect("Invalid data"));
+        let (remainder, _type) = DnsType::deserialize(
+            remainder[..2].try_into().expect("Invalid data"),
+            remainder[8..].try_into().expect("Invalid data"),
+        );
+        (
+            remainder,
+            Self {
+                name,
+                _type,
+                _class,
+                ttl,
+            },
+        )
     }
 }
 
@@ -50,18 +74,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_serializes() {
+    fn it_serdes() {
         let a = DnsAnswer {
             name: LabelSeq::_new("codecrafters.io"),
             _type: DnsType::A(8, 8, 8, 8),
             ..Default::default()
         };
-        assert_eq!(
-            a.serialize(),
-            [
-                12, 99, 111, 100, 101, 99, 114, 97, 102, 116, 101, 114, 115, 2, 105, 111, 0, 0, 1,
-                0, 1, 0, 0, 0, 0, 0, 4, 8, 8, 8, 8
-            ]
-        )
+        let expected_bytes = [
+            12, 99, 111, 100, 101, 99, 114, 97, 102, 116, 101, 114, 115, 2, 105, 111, 0, 0, 1, 0,
+            1, 0, 0, 0, 0, 0, 4, 8, 8, 8, 8,
+        ];
+        assert_eq!(a.serialize(), expected_bytes);
+        let (remainder, da) = DnsAnswer::deserialize(&expected_bytes);
+        assert_eq!(da, a);
+        assert_eq!(remainder.len(), 0);
     }
 }

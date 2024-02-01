@@ -30,6 +30,44 @@ impl DnsType {
         }
         .to_be_bytes()
     }
+
+    pub fn serialize_to_length_and_data(&self) -> Vec<u8> {
+        let mut s = match self {
+            DnsType::A(_, _, _, _) => 4u16,
+            DnsType::_Cname => todo!(),
+        }
+        .to_be_bytes()
+        .to_vec();
+        s.extend_from_slice(&self.serialize());
+        s
+    }
+
+    pub fn deserialize(type_bytes: [u8; 2], length_and_data_bytes: &[u8]) -> (&[u8], Self) {
+        match Self::from_bytes(type_bytes) {
+            DnsType::A(_, _, _, _) => Self::deserialize_a_type(length_and_data_bytes),
+            DnsType::_Cname => todo!(),
+        }
+    }
+
+    fn deserialize_a_type(length_and_data_bytes: &[u8]) -> (&[u8], Self) {
+        assert_eq!(
+            u16::from_be_bytes(
+                length_and_data_bytes[..2]
+                    .try_into()
+                    .expect("Expected to find at least 2 bytes")
+            ),
+            4
+        );
+        (
+            &length_and_data_bytes[6..],
+            DnsType::A(
+                length_and_data_bytes[2],
+                length_and_data_bytes[3],
+                length_and_data_bytes[4],
+                length_and_data_bytes[5],
+            ),
+        )
+    }
 }
 
 impl DnsSerialize for DnsType {
@@ -52,8 +90,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_serializes() {
-        assert_eq!(DnsType::A(8, 8, 8, 8).serialize(), [8, 8, 8, 8])
+    fn it_serdes() {
+        let t = DnsType::A(8, 8, 8, 8);
+
+        let expected_bytes = [0, 4, 8, 8, 8, 8];
+        assert_eq!(t.serialize_to_length_and_data(), expected_bytes);
+        assert_eq!(
+            DnsType::deserialize(1u16.to_be_bytes(), &expected_bytes).1,
+            t
+        );
     }
 
     #[test]

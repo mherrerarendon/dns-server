@@ -5,7 +5,7 @@ use crate::{
     dns_serde::{DnsDeserialize, DnsSerialize},
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct DnsPacket {
     pub header: DnsHeader,
     pub questions: Vec<DnsQuestion>,
@@ -74,19 +74,16 @@ impl DnsSerialize for DnsPacket {
 impl DnsDeserialize for DnsPacket {
     fn deserialize(data: &[u8]) -> (&[u8], Self) {
         let (remainder, header) = DnsHeader::deserialize(&data);
-        let mut questions_remainder = remainder;
-        let mut questions: Vec<DnsQuestion> = Vec::new();
-        for _ in 0..header.qdcount {
-            let (remainder, question) = DnsQuestion::deserialize(&questions_remainder);
-            questions_remainder = remainder;
-            questions.push(question);
-        }
+        let (remainder, questions) =
+            DnsQuestion::deserialize_multiple(remainder, header.qdcount as usize);
+        let (remainder, answers) =
+            DnsAnswer::deserialize_multiple(remainder, header.ancount as usize);
         (
-            &[],
+            remainder,
             Self {
                 header,
                 questions,
-                answers: None,
+                answers: Some(answers),
             },
         )
     }
@@ -109,7 +106,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_serializes() {
+    fn it_serdes() {
         let h = DnsHeader {
             id: 1234,
             qr: 1,
@@ -122,36 +119,14 @@ mod tests {
             ..Default::default()
         };
         let p = DnsPacket::new(h, vec![q], Some(vec![a]));
-        assert_eq!(
-            p.serialize(),
-            [
-                4, 210, 128, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 12, 99, 111, 100, 101,
-                99, 114, 97, 102, 116, 101, 114, 115, 2, 105, 111, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 4,
-                8, 8, 8, 8
-            ]
-        )
-    }
-
-    #[test]
-    fn it_kinda_serdes() {
-        let h = DnsHeader {
-            id: 1234,
-            qr: 1,
-            qdcount: 1,
-            ..Default::default()
-        };
-        let q = DnsQuestion {
-            name: LabelSeq::_new("codecrafters.io"),
-            ..Default::default()
-        };
-        let p = DnsPacket {
-            header: h.clone(),
-            questions: vec![q.clone()],
-            ..Default::default()
-        };
-        let s = p.serialize();
-        let (dh, dq, _) = DnsPacket::deserialize(&s).1.into_parts();
-        assert_eq!(dh, h);
-        assert_eq!(dq[0], q);
+        let expected_bytes = [
+            4, 210, 128, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 12, 99, 111, 100, 101, 99,
+            114, 97, 102, 116, 101, 114, 115, 2, 105, 111, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 4, 8, 8,
+            8, 8,
+        ];
+        assert_eq!(p.serialize(), expected_bytes);
+        let (remainder, dp) = DnsPacket::deserialize(&expected_bytes);
+        assert_eq!(dp, p);
+        assert_eq!(remainder.len(), 0);
     }
 }
