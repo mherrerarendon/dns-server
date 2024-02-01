@@ -32,6 +32,7 @@ impl QueryHandler {
                     "handling {} questions from {}",
                     query_packet.header.qdcount, source_addr
                 );
+                println!("query packet: {:?}", query_packet);
                 let pending_query = query_packet.clone();
                 self.pending_queries
                     .insert(query_packet.header.id, (source_addr, pending_query));
@@ -41,6 +42,7 @@ impl QueryHandler {
                     forward_packet.prepare_for_response(0);
                     let forward_bytes = forward_packet.serialize();
                     println!("forwarding question to {}", resolver_addr);
+                    println!("{:?}", forward_packet);
                     socket
                         .send_to(&forward_bytes, resolver_addr)
                         .expect("Failed to forward query");
