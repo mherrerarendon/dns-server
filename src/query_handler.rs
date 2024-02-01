@@ -64,7 +64,7 @@ impl QueryHandler {
                                     .expect("Failed to respond to query");
                             }
                         } else {
-                            println!("no answers were found");
+                            println!("no answers were found, packet header: {:?}", header);
                         }
                     }
                 }
