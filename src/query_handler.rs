@@ -52,14 +52,18 @@ impl QueryHandler {
                 if let Some(ref mut pending_query) = self.pending_queries.get_mut(&header.id) {
                     println!("found pending query with id {}", header.id);
                     if let Some(answers) = answers {
-                        println!("adding answer to pending query from {}", pending_query.0);
-                        pending_query.1.add_answer(answers[0].clone());
-                        if pending_query.1.all_questions_answered() {
-                            pending_query.1.prepare_for_response();
-                            let resolved_bytes = pending_query.1.serialize();
-                            socket
-                                .send_to(&resolved_bytes, pending_query.0)
-                                .expect("Failed to respond to query");
+                        if answers.len() > 0 {
+                            println!("adding answer to pending query from {}", pending_query.0);
+                            pending_query.1.add_answer(answers[0].clone());
+                            if pending_query.1.all_questions_answered() {
+                                pending_query.1.prepare_for_response();
+                                let resolved_bytes = pending_query.1.serialize();
+                                socket
+                                    .send_to(&resolved_bytes, pending_query.0)
+                                    .expect("Failed to respond to query");
+                            }
+                        } else {
+                            println!("no answers were found");
                         }
                     }
                 }
