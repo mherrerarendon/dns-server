@@ -9,7 +9,7 @@ pub enum DnsType {
 impl DnsType {
     pub fn int_as_bytes(&self) -> [u8; 2] {
         match self {
-            DnsType::A(_, _, _, _) => 1u16,
+            DnsType::A(..) => 1u16,
             DnsType::_Cname => 5u16,
         }
         .to_be_bytes()
@@ -25,7 +25,7 @@ impl DnsType {
 
     pub fn serialize_to_length_and_data(&self) -> Vec<u8> {
         let mut s = match self {
-            DnsType::A(_, _, _, _) => 4u16,
+            DnsType::A(..) => 4u16,
             DnsType::_Cname => todo!(),
         }
         .to_be_bytes()
@@ -36,7 +36,7 @@ impl DnsType {
 
     pub fn deserialize(type_bytes: [u8; 2], length_and_data_bytes: &[u8]) -> (&[u8], Self) {
         match Self::from_bytes(type_bytes) {
-            DnsType::A(_, _, _, _) => Self::deserialize_a_type(length_and_data_bytes),
+            DnsType::A(..) => Self::deserialize_a_type(length_and_data_bytes),
             DnsType::_Cname => todo!(),
         }
     }
